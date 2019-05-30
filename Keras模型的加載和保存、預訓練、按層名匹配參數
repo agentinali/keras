@@ -1,0 +1,63 @@
+我們不推薦使用pickle或cPickle來保存Keras模型
+
+你可以使用model.save(filepath)將Keras模型和權重保存在一個HDF5文件中，該文件將包含：
+
+模型的結構，以便重構該模型
+模型的權重
+訓練配置（損失函數，優化器等）
+優化器的狀態，以便於從上次訓練中斷的地方開始
+使用keras.models.load_model(filepath)來重新實例化你的模型，如果文件中存儲了訓練配置的話，該函數還會同時完成模型的編譯
+
+例子：
+
+from keras.models import load_model
+ 
+model.save('my_model.h5')  # creates a HDF5 file 'my_model.h5'
+del model  # deletes the existing model
+ 
+# returns a compiled model
+# identical to the previous one
+model = load_model('my_model.h5')
+如果你只是希望保存模型的結構，而不包含其權重或配置信息，可以使用：
+
+# save as JSON
+json_string = model.to_json()
+ 
+# save as YAML
+yaml_string = model.to_yaml()
+這項操作將把模型序列化為json或yaml文件，這些文件對人而言也是友好的，如果需要的話你甚至可以手動打開這些文件並進行編輯。
+
+當然，你也可以從保存好的json文件或yaml文件中載入模型：
+
+# model reconstruction from JSON:
+from keras.models import model_from_json
+model = model_from_json(json_string)
+ 
+# model reconstruction from YAML
+model = model_from_yaml(yaml_string)
+如果需要保存模型的權重，可通過下面的代碼利用HDF5進行保存。注意，在使用前需要確保你已安裝了HDF5和其Python庫h5py
+
+model.save_weights('my_model_weights.h5')
+如果你需要在代碼中初始化一個完全相同的模型，請使用：
+
+model.load_weights('my_model_weights.h5')
+如果你需要加載權重到不同的網絡結構（有些層一樣）中，例如fine-tune或transfer-learning，你可以通過層名字來加載模型：
+
+model.load_weights('my_model_weights.h5', by_name=True)
+例如：
+
+"""
+假如原模型为：
+    model = Sequential()
+    model.add(Dense(2, input_dim=3, name="dense_1"))
+    model.add(Dense(3, name="dense_2"))
+    ...
+    model.save_weights(fname)
+"""
+# new model
+model = Sequential()
+model.add(Dense(2, input_dim=3, name="dense_1"))  # will be loaded
+model.add(Dense(10, name="new_dense"))  # will not be loaded
+ 
+# load weights from first model; will only affect the first layer, dense_1.
+model.load_weights(fname, by_name=True)
