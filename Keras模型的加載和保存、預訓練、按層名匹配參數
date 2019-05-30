@@ -1,3 +1,4 @@
+
 參考來源 https://blog.csdn.net/dongapple/article/details/77530212
 
 我們不推薦使用pickle或cPickle來保存Keras模型
